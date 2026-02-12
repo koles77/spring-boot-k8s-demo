@@ -1,0 +1,44 @@
+stages:
+- build
+- test
+- deploy
+
+variables:
+IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+CONTAINER_NAME: my-app
+
+# Этап сборки Docker‑образа
+build:
+stage: build
+script:
+- docker build -t $IMAGE_TAG .
+tags:
+- shell
+only:
+- main
+
+# Этап тестирования: простой curl до контейнера
+test:
+stage: test
+script:
+- docker run -d --name $CONTAINER_NAME -p 8080:8080 $IMAGE_TAG
+- sleep 5
+- curl -f http://localhost:8080 || exit 1
+- docker stop $CONTAINER_NAME
+- docker rm $CONTAINER_NAME
+tags:
+- shell
+only:
+- main
+
+# Этап деплоя: запуск контейнера локально
+deploy:
+stage: deploy
+script:
+- docker stop $CONTAINER_NAME || true
+- docker rm $CONTAINER_NAME || true
+- docker run -d --name $CONTAINER_NAME -p 8080:8080 $IMAGE_TAG
+tags:
+- shell
+only:
+- main
