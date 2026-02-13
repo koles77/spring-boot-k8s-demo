@@ -19,7 +19,7 @@ build:
 test:
   stage: test
   script:
-    - docker run -d --name $CONTAINER_NAME -p 8080:8080 $IMAGE_TAG
+    - docker run -d --name $CONTAINER_NAME -p 8080:8080 -m 1g    $IMAGE_TAG
     - sleep 5
     - curl -f http://localhost:8080 || exit 1
     - docker stop $CONTAINER_NAME
@@ -34,7 +34,7 @@ deploy:
   script:
     - docker stop $CONTAINER_NAME || true
     - docker rm $CONTAINER_NAME || true
-    - docker run -d --name $CONTAINER_NAME -p 8080:8080 $IMAGE_TAG
+    - docker run -d --name $CONTAINER_NAME -p 8080:8080 -m 1g $IMAGE_TAG
   tags:
     - shell
   only:
