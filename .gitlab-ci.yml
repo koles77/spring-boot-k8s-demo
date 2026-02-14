@@ -1,16 +1,21 @@
 stages:
   - build
   - test
-  - deploy
+  - deploy_to_k8s
 
 variables:
+  IMAGE_NAME: firstservlet
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   CONTAINER_NAME: my-app
 
 build:
   stage: build
   script:
-    - docker build -t $IMAGE_TAG .
+    - mvn clean package
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+  artifacts:
+    paths:
+      - target/*.jar
   tags:
     - shell
   only:
@@ -30,8 +35,11 @@ test:
     - main
 
 deploy:
-  stage: deploy
+  stage: deploy_to_k8s
+  image: bitnami/kubectl:latest
   script:
+    - kubectl config use-context docker-desktop
+    - kubectl apply -f deployment.yaml
     - docker stop $CONTAINER_NAME || true
     - docker rm $CONTAINER_NAME || true
     - docker run -d --name $CONTAINER_NAME -p 8080:8080 -m 1g $IMAGE_TAG
